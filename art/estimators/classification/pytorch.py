@@ -26,11 +26,10 @@ import logging
 import os
 import random
 import time
-from typing import Any, Dict, List, Optional, Tuple, Union, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import six
-
 from art import config
 from art.estimators.classification.classifier import (
     ClassGradientsMixin,
@@ -42,11 +41,10 @@ from art.utils import check_and_transform_label_format
 if TYPE_CHECKING:
     # pylint: disable=C0412, C0302
     import torch
-
-    from art.utils import CLIP_VALUES_TYPE, PREPROCESSING_TYPE
     from art.data_generators import DataGenerator
-    from art.defences.preprocessor import Preprocessor
     from art.defences.postprocessor import Postprocessor
+    from art.defences.preprocessor import Preprocessor
+    from art.utils import CLIP_VALUES_TYPE, PREPROCESSING_TYPE
 
 logger = logging.getLogger(__name__)
 
@@ -150,6 +148,10 @@ class PyTorchClassifier(ClassGradientsMixin, ClassifierMixin, PyTorchEstimator):
         self._layer_idx_gradients = -1
 
         if isinstance(self._loss, torch.nn.CrossEntropyLoss):
+            self._reduce_labels = True
+            self._int_labels = True
+            self._probability_labels = True
+        elif type(self._loss).__name__ == "CrossEntropyLossTorch":
             self._reduce_labels = True
             self._int_labels = True
             self._probability_labels = True
@@ -479,7 +481,9 @@ class PyTorchClassifier(ClassGradientsMixin, ClassifierMixin, PyTorchEstimator):
             raise ValueError("An optimizer is needed to train the model, but none for provided.")
 
         # Train directly in PyTorch
-        from art.preprocessing.standardisation_mean_std.pytorch import StandardisationMeanStdPyTorch
+        from art.preprocessing.standardisation_mean_std.pytorch import (
+            StandardisationMeanStdPyTorch,
+        )
 
         if isinstance(generator, PyTorchDataGenerator) and (
             self.preprocessing is None
