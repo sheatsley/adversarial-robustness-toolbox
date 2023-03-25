@@ -23,16 +23,21 @@ This module implements the `Auto Projected Gradient Descent` attack.
 import abc
 import logging
 import math
-from typing import Optional, Union, TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional, Union
 
 import numpy as np
-from tqdm.auto import trange
-
-from art.config import ART_NUMPY_DTYPE
 from art.attacks.attack import EvasionAttack
-from art.estimators.estimator import BaseEstimator, LossGradientsMixin
+from art.config import ART_NUMPY_DTYPE
 from art.estimators.classification.classifier import ClassifierMixin
-from art.utils import check_and_transform_label_format, projection, random_sphere, is_probability, get_labels_np_array
+from art.estimators.estimator import BaseEstimator, LossGradientsMixin
+from art.utils import (
+    check_and_transform_label_format,
+    get_labels_np_array,
+    is_probability,
+    projection,
+    random_sphere,
+)
+from tqdm.auto import trange
 
 if TYPE_CHECKING:
     from art.utils import CLASSIFIER_LOSS_GRADIENTS_TYPE
@@ -90,7 +95,11 @@ class AutoProjectedGradientDescent(EvasionAttack):
             "cross_entropy", or "difference_logits_ratio"
         :param verbose: Show progress bars.
         """
-        from art.estimators.classification import TensorFlowClassifier, TensorFlowV2Classifier, PyTorchClassifier
+        from art.estimators.classification import (
+            PyTorchClassifier,
+            TensorFlowClassifier,
+            TensorFlowV2Classifier,
+        )
 
         if isinstance(estimator, TensorFlowClassifier):
             raise ValueError("This attack does not support TensorFlow  v1.")
@@ -443,7 +452,7 @@ class AutoProjectedGradientDescent(EvasionAttack):
 
                 # modification for image-wise stepsize update
                 _batch_size = x_k.shape[0]
-                eta = np.full((_batch_size, 1, 1, 1), self.eps_step).astype(ART_NUMPY_DTYPE)
+                eta = np.full((_batch_size,) + (1,) * len(x_k.shape[1:]), self.eps_step).astype(ART_NUMPY_DTYPE)
                 self.count_condition_1 = np.zeros(shape=(_batch_size,))
 
                 for k_iter in trange(self.max_iter, desc="AutoPGD - iteration", leave=False, disable=not self.verbose):
